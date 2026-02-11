@@ -86,6 +86,7 @@ CodeArena is a Progressive Web App (PWA) that executes user-provided code snippe
 - Limits strictly enforced
 - No root inside container
 - Firewall configured on server
+- Output size is limited to prevent log-based DoS
 
 ### NF6 – Performance
 - Hello World compile+run < 5 seconds

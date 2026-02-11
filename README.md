@@ -16,3 +16,6 @@ Week 2: Requirements, security concept, and API contract.
 - `backend/` Go API (later)
 - `infra/` docker-compose, reverse proxy config (later)
 - `docs/` requirements + security + API contract
+
+## License
+Planned license: MIT (or Apache-2.0)
