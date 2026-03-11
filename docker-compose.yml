@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - backend-data:/app/data
+    environment:
+      - CODEARENA_DB_PATH=/app/data/codearena.db
+    depends_on:
+      - compiler-images
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Build compiler images (one-shot service)
+  compiler-images:
+    image: docker:cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./infra/docker:/dockerfiles
+    command: >
+      sh -c "
+        docker build -t codearena-python -f /dockerfiles/python.Dockerfile /dockerfiles &&
+        docker build -t codearena-go -f /dockerfiles/go.Dockerfile /dockerfiles &&
+        docker build -t codearena-cpp -f /dockerfiles/cpp.Dockerfile /dockerfiles &&
+        docker build -t codearena-rust -f /dockerfiles/rust.Dockerfile /dockerfiles &&
+        docker build -t codearena-javascript -f /dockerfiles/javascript.Dockerfile /dockerfiles &&
+        echo 'All compiler images built successfully'
+      "
+    restart: "no"
+
+volumes:
+  backend-data:

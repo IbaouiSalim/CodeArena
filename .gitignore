@@ -9,9 +9,13 @@ dist/
 # Go / Backend
 # ======================
 *.exe
+*.exe~
 *.out
 *.test
 *.log
+*.db
+*.db-shm
+*.db-wal
 
 # ======================
 # Environment files

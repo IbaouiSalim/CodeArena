@@ -8,6 +8,21 @@ This document defines how the frontend communicates with the Go backend.
 
 ---
 
+## 0) Health Check
+
+### GET /api/health
+Returns a simple status to verify the backend is running.
+
+#### Response body (success)
+```json
+{ "status": "ok" }
+```
+
+#### Response
+- `200 OK` – backend is healthy
+
+---
+
 ## 1) Execute Code
 
 ### POST /api/execute
@@ -23,7 +38,7 @@ Runs a code snippet in an isolated container and returns the execution result.
 ```
 
 #### Request fields
-- `language` (string, required): one of `"go" | "python" | "cpp"`
+- `language` (string, required): one of `"go" | "python" | "cpp" | "rust" | "javascript"`
 - `code` (string, required): source code
 - `stdin` (string, optional): input passed to the program (default: empty string)
 
@@ -69,7 +84,7 @@ Stores a snippet and returns a short token for sharing.
 ```
 
 #### Request fields
-- `language` (string, required): `"go" | "python" | "cpp"`
+- `language` (string, required): `"go" | "python" | "cpp" | "rust" | "javascript"`
 - `code` (string, required)
 - `stdin` (string, optional)
 - `title` (string, optional)
@@ -117,13 +132,67 @@ Loads a stored snippet by its share token.
 
 ---
 
-## 4) Execution Limits (Enforced by Backend)
+## 4) Interactive Execution (WebSocket)
+
+### WS /api/execute/ws
+WebSocket endpoint for interactive code execution with real-time stdin/stdout streaming.
+
+#### Connection flow
+1. Client opens a WebSocket connection to `/api/execute/ws`.
+2. Client sends a **start message**:
+```json
+{
+  "type": "start",
+  "language": "python",
+  "code": "name = input('Name: ')\nprint(f'Hello {name}')"
+}
+```
+3. Server creates a Docker container with a PTY and streams output back.
+4. Server sends **output messages**:
+```json
+{ "type": "stdout", "data": "Name: " }
+```
+5. Client can send **stdin input**:
+```json
+{ "type": "stdin", "data": "Alice\n" }
+```
+6. When execution completes, the server sends an **exit message**:
+```json
+{ "type": "exit", "exitCode": 0, "duration": 142 }
+```
+7. Connection closes.
+
+#### Message types (server → client)
+- `stdout` – standard output chunk
+- `stderr` – standard error chunk
+- `exit` – process finished (includes `exitCode` and `duration` in ms)
+- `error` – server-side error
+
+#### Message types (client → server)
+- `start` – begin execution (must be first message)
+- `stdin` – send input to the running process
+
+---
+
+## 5) Execution Limits (Enforced by Backend)
 
 - Timeout: max **10 seconds**
-- Memory: max **256 MB**
+- Memory: max **256 MB** (no swap)
 - CPU: max **1 core**
+- PIDs: max **256** (fork bomb protection)
 - Network: **disabled** inside execution containers
+- Output: max **64 KB** (truncated beyond this)
 
 Frontend display rules (suggested):
-- If `wasTimeout = true`, show: “Execution timed out.”
+- If `wasTimeout = true`, show: "Execution timed out."
 - If `stderr` is not empty, show it as an error panel.
+
+---
+
+## 6) Rate Limiting
+
+The backend enforces per-IP token-bucket rate limiting on `/api/execute` and `/api/snippets`:
+- **Rate:** 5 requests/second
+- **Burst:** 15 requests
+
+Exceeding the limit returns `429 Too Many Requests`.
