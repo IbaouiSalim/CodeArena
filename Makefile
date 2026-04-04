@@ -1,6 +1,5 @@
-.PHONY: all build-backend build-frontend build-images dev test test-backend test-frontend test-e2e lint clean
+.PHONY: all build-backend build-frontend build-images dev test test-backend test-frontend test-e2e lint
 
-# ── Build ──────────────────────────────────────────
 all: build-backend build-frontend build-images
 
 build-backend:
@@ -16,17 +15,14 @@ build-images:
 	docker build -t codearena-rust -f infra/docker/rust.Dockerfile infra/docker
 	docker build -t codearena-javascript -f infra/docker/javascript.Dockerfile infra/docker
 
-# ── Development ────────────────────────────────────
 dev:
-	@echo "Starting backend and frontend in dev mode..."
 	cd backend && go run . &
 	cd frontend && npm run dev
 
-# ── Testing ────────────────────────────────────────
 test: test-backend test-frontend
 
 test-backend:
-	cd backend && go test ./... -v -count=1
+	cd backend && go test ./... -v
 
 test-frontend:
 	cd frontend && npx vitest run
@@ -34,7 +30,6 @@ test-frontend:
 test-e2e:
 	cd frontend && npx playwright test
 
-# ── Linting ────────────────────────────────────────
 lint:
 	cd frontend && npm run lint
 	cd frontend && npx prettier --check "src/**/*.{ts,tsx}"

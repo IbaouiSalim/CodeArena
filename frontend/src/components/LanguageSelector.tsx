@@ -24,9 +24,9 @@ const languages: {
 export default function LanguageSelector({ language, onChange }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  
   const current = languages.find((l) => l.value === language)!;
 
-  // close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -37,7 +37,6 @@ export default function LanguageSelector({ language, onChange }: LanguageSelecto
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // close on Escape
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -66,6 +65,7 @@ export default function LanguageSelector({ language, onChange }: LanguageSelecto
       {open && (
         <div className="lang-select-dropdown" role="listbox" aria-label="Languages">
           <div className="lang-select-header">Select Language</div>
+          
           {languages.map((l) => {
             const selected = l.value === language;
             return (

@@ -16,6 +16,7 @@ export default function ShareButton({ language, code, stdin }: ShareButtonProps)
 
   async function handleShare() {
     if (!code.trim()) return;
+    
     setStatus("loading");
     try {
       const res = await createSnippet({
@@ -24,6 +25,7 @@ export default function ShareButton({ language, code, stdin }: ShareButtonProps)
         stdin,
         title: "",
       });
+      
       const url = `${window.location.origin}/s/${res.token}`;
       setShareUrl(url);
       setStatus("done");
@@ -70,6 +72,7 @@ export default function ShareButton({ language, code, stdin }: ShareButtonProps)
               ×
             </button>
           </div>
+          
           <div className="share-url-row">
             <input
               type="text"

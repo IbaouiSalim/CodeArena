@@ -1,20 +1,32 @@
 version: "3.9"
 
 services:
+  docker-proxy:
+    image: alpine/socat
+    command: TCP-LISTEN:2375,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - codearena
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - backend-data:/app/data
     environment:
       - CODEARENA_DB_PATH=/app/data/codearena.db
+      - DOCKER_HOST=tcp://docker-proxy:2375
     depends_on:
       - compiler-images
+      - docker-proxy
     restart: unless-stopped
+    volumes:
+      - backend-data:/app/data
+    networks:
+      - codearena
 
   frontend:
     build:
@@ -25,8 +37,11 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://backend:8080
+    networks:
+      - codearena
 
-  # Build compiler images (one-shot service)
   compiler-images:
     image: docker:cli
     volumes:
@@ -45,3 +60,6 @@ services:
 
 volumes:
   backend-data:
+
+networks:
+  codearena:

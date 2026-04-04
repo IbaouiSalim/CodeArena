@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WsMessage represents a WebSocket message between client and server.
 type WsMessage struct {
 	Type       string `json:"type"`
 	Data       string `json:"data,omitempty"`
@@ -24,7 +23,6 @@ type WsMessage struct {
 	Message    string `json:"message,omitempty"`
 }
 
-// SendWsJSON sends a JSON message over a WebSocket connection.
 func SendWsJSON(ws *websocket.Conn, msg WsMessage) {
 	data, _ := json.Marshal(msg)
 	ws.WriteMessage(websocket.TextMessage, data)
@@ -52,15 +50,15 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 
 	// Container config: TTY + interactive stdin
 	containerCfg := &container.Config{
-		Image:        imgName,
-		Cmd:          cmd,
-		Tty:          true,
-		OpenStdin:    true,
-		AttachStdin:  true,
-		AttachStdout: true,
-		AttachStderr: true,
+		Image:           imgName,
+		Cmd:             cmd,
+		Tty:             true,
+		OpenStdin:       true,
+		AttachStdin:     true,
+		AttachStdout:    true,
+		AttachStderr:    true,
 		NetworkDisabled: true,
-		User:         "runner",
+		User:            "runner",
 	}
 
 	hostCfg := &container.HostConfig{
@@ -84,7 +82,6 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 	containerID := resp.ID
 	log.Printf("[interactive] Container created: %s (lang=%s)", containerID[:12], lang)
 
-	// Ensure cleanup
 	defer func() {
 		rmCtx, rmCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer rmCancel()
@@ -92,7 +89,6 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 		log.Printf("[interactive] Container removed: %s", containerID[:12])
 	}()
 
-	// Attach to container (get bidirectional stream)
 	hijack, err := e.cli.ContainerAttach(ctx, containerID, container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
@@ -105,13 +101,14 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 	}
 	defer hijack.Close()
 
-	// Start container
 	if err := e.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
 		sendWsError(ws, "failed to start container: "+err.Error())
 		return
 	}
 
 	start := time.Now()
+
+	waitTimeout := e.cfg.Timeout
 
 	// Goroutine: read container output (TTY raw) → send to WebSocket
 	outputDone := make(chan struct{})
@@ -122,7 +119,6 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 			n, err := hijack.Reader.Read(buf)
 			if n > 0 {
 				text := string(buf[:n])
-				// Clean up CRLF from TTY to LF
 				text = strings.ReplaceAll(text, "\r\n", "\n")
 				text = strings.TrimRight(text, "\r")
 				SendWsJSON(ws, WsMessage{Type: "output", Data: text})
@@ -133,17 +129,12 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 		}
 	}()
 
-	// Goroutine: read stdin from WebSocket → write to container stdin
 	stdinDone := make(chan struct{})
 	go func() {
 		defer close(stdinDone)
 		for {
 			_, rawMsg, err := ws.ReadMessage()
 			if err != nil {
-				// WebSocket closed — kill container
-				killCtx, killCancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer killCancel()
-				e.cli.ContainerKill(killCtx, containerID, "SIGKILL")
 				break
 			}
 
@@ -162,34 +153,57 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 		}
 	}()
 
-	// Wait for container to finish
-	statusCh, errCh := e.cli.ContainerWait(ctx, containerID, container.WaitConditionNotRunning)
+	// Aggressively kill container if timeout is exceeded
+	timeoutTimer := time.NewTimer(waitTimeout)
+	defer timeoutTimer.Stop()
+
+	go func() {
+		<-timeoutTimer.C
+		killCtx, killCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		e.cli.ContainerKill(killCtx, containerID, "SIGKILL")
+		killCancel()
+		// Close hijack to unblock reader goroutine
+		hijack.Close()
+	}()
+
+	// Create a separate context just for waiting with longer deadline
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), waitTimeout+5*time.Second)
+	defer waitCancel()
+
+	statusCh, errCh := e.cli.ContainerWait(waitCtx, containerID, container.WaitConditionNotRunning)
 
 	var exitCode int
 	var wasTimeout bool
 
 	select {
-	case err := <-errCh:
-		if err != nil {
-			if ctx.Err() != nil {
-				wasTimeout = true
-				exitCode = 137
-				killCtx, killCancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer killCancel()
-				e.cli.ContainerKill(killCtx, containerID, "SIGKILL")
-			} else {
-				sendWsError(ws, "container error: "+err.Error())
-				return
-			}
-		}
 	case status := <-statusCh:
+		elapsed := time.Since(start)
 		exitCode = int(status.StatusCode)
-	case <-time.After(e.cfg.Timeout + 2*time.Second):
+		if status.Error != nil {
+			log.Printf("[interactive] container status error: %v", status.Error)
+		}
+		// Check if we exceeded timeout (exit code 137 means SIGKILL from timeout)
+		if elapsed >= waitTimeout && exitCode == 137 {
+			wasTimeout = true
+		}
+	case err := <-errCh:
+		elapsed := time.Since(start)
+		if elapsed >= waitTimeout {
+			// Timeout definitely occurred
+			wasTimeout = true
+			exitCode = 137
+		} else if err != nil {
+			log.Printf("[interactive] container wait error: %v", err)
+			exitCode = 1
+		}
+	case <-time.After(waitTimeout + 3*time.Second):
+		// Fallback: forcefully kill if still running after timeout
+		killCtx, killCancel := context.WithTimeout(context.Background(), 2*time.Second)
+		e.cli.ContainerKill(killCtx, containerID, "SIGKILL")
+		killCancel()
+		hijack.Close()
 		wasTimeout = true
 		exitCode = 137
-		killCtx, killCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer killCancel()
-		e.cli.ContainerKill(killCtx, containerID, "SIGKILL")
 	}
 
 	// Wait for output reader to finish draining
@@ -213,7 +227,7 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 func buildInteractiveCommand(lang Language, code string) []string {
 	switch lang {
 	case LangPython:
-		script := writeAndExec(code, "main.py", "python3 -u main.py") // -u for unbuffered output
+		script := writeAndExec(code, "main.py", "python3 -u main.py")
 		return []string{"/bin/sh", "-c", script}
 	case LangGo:
 		script := writeAndExec(code, "main.go", "go run main.go")
@@ -232,8 +246,6 @@ func buildInteractiveCommand(lang Language, code string) []string {
 	}
 }
 
-// writeAndExec generates a shell script that writes code to a file and runs it.
-// No stdin redirection — stdin comes from the PTY.
 func writeAndExec(code, filename, runCmd string) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("cat > %s << 'CODEARENA_EOF'\n", filename))

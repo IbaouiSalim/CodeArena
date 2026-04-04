@@ -10,7 +10,17 @@ import ShareButton from "../components/ShareButton";
 import SnippetLibrary from "../components/SnippetLibrary";
 import { loadSnippet } from "../utils/api";
 
-const WS_URL = "ws://localhost:8080/api/execute/ws";
+function getWebSocketURL(): string {
+  if (typeof window === "undefined") return "ws://localhost:8080/api/execute/ws";
+  
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  if (window.location.hostname === "localhost") {
+    return `${protocol}//localhost:8080/api/execute/ws`;
+  }
+  return `${protocol}//${window.location.host}/api/execute/ws`;
+}
+
+const WS_URL = getWebSocketURL();
 
 type MobileTab = "code" | "terminal";
 
@@ -47,6 +57,7 @@ function useIsMobile(breakpoint = 768) {
 
 export default function EditorPage() {
   const { token } = useParams<{ token?: string }>();
+
   const [language, setLanguage] = useState<Language>("python");
   const [code, setCode] = useState(defaultCode.python);
   const [isRunning, setIsRunning] = useState(false);
@@ -56,16 +67,15 @@ export default function EditorPage() {
   const isMobile = useIsMobile();
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Load shared snippet when URL has a token
   useEffect(() => {
     if (!token) return;
+    
     loadSnippet(token)
       .then((snippet) => {
         setLanguage(snippet.language);
         setCode(snippet.code);
       })
       .catch(() => {
-        // Snippet not found — keep defaults
       });
   }, [token]);
 
@@ -80,7 +90,6 @@ export default function EditorPage() {
   const handleRun = useCallback(() => {
     if (!code.trim() || isRunning) return;
 
-    // Close any existing WebSocket
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -89,12 +98,10 @@ export default function EditorPage() {
     setIsRunning(true);
     if (isMobile) setMobileTab("terminal");
 
-    // Open WebSocket connection
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      // Send start message with language and code
       ws.send(
         JSON.stringify({
           type: "start",
@@ -105,31 +112,38 @@ export default function EditorPage() {
     };
 
     ws.onclose = () => {
-      setIsRunning(false);
+      setIsRunning(false);  // Code finished executing
     };
 
     ws.onerror = () => {
-      setIsRunning(false);
+      setIsRunning(false);  // Connection error
     };
   }, [language, code, isRunning, isMobile]);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Event Handler: Example code selected from snippet library
+  // ─────────────────────────────────────────────────────────────────────────
+  
   const handleSnippetSelect = useCallback((snippet: SnippetExample) => {
     setLanguage(snippet.language);
     setCode(snippet.code);
-    setMobileTab("code");
+    setMobileTab("code");  // Switch to code view on mobile
   }, []);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Event Handler: Keyboard shortcut (Ctrl+Enter or Cmd+Enter to run)
+  // ─────────────────────────────────────────────────────────────────────────
+  
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
+        e.preventDefault();  // Prevent default browser behavior
         handleRun();
       }
     },
     [handleRun],
   );
 
-  // Clean up WebSocket on unmount
   useEffect(() => {
     return () => {
       if (wsRef.current) {
@@ -145,6 +159,7 @@ export default function EditorPage() {
       <div className="toolbar">
         <div className="toolbar-left">
           <LanguageSelector language={language} onChange={handleLanguageChange} />
+          
           <button
             className="btn btn-ghost hide-mobile"
             onClick={() => setLibraryOpen(true)}
@@ -155,6 +170,7 @@ export default function EditorPage() {
             <span>Examples</span>
           </button>
         </div>
+
         <div className="toolbar-right">
           <button
             className="btn btn-ghost show-mobile-only"
@@ -164,7 +180,9 @@ export default function EditorPage() {
           >
             <BookOpen size={16} />
           </button>
+          
           <ShareButton language={language} code={code} stdin="" />
+          
           <button
             className="btn btn-primary"
             onClick={handleRun}
@@ -182,7 +200,6 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* ── Mobile tab bar ── */}
       {isMobile && (
         <div className="mobile-tabs">
           <button
@@ -204,7 +221,6 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* ── Desktop layout: side by side ── */}
       {!isMobile && (
         <div className="editor-layout">
           <div className="editor-main">
@@ -214,7 +230,6 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* ── Mobile layout: tabbed ── */}
       {isMobile && (
         <div className="mobile-content">
           {mobileTab === "code" && (

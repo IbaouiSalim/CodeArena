@@ -10,7 +10,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Snippet represents a stored code snippet.
 type Snippet struct {
 	Token     string `json:"token"`
 	Language  string `json:"language"`
@@ -20,19 +19,16 @@ type Snippet struct {
 	CreatedAt string `json:"createdAt"`
 }
 
-// Store manages snippet persistence with SQLite.
 type Store struct {
 	db *sql.DB
 }
 
-// New opens (or creates) the SQLite database and ensures the schema exists.
 func New(dbPath string) (*Store, error) {
 	db, err := sql.Open("sqlite", dbPath+"?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 
-	// Create table if not exists
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS snippets (
 			token      TEXT PRIMARY KEY,
@@ -50,12 +46,10 @@ func New(dbPath string) (*Store, error) {
 	return &Store{db: db}, nil
 }
 
-// Close releases the database connection.
 func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// Create stores a new snippet and returns the generated token.
 func (s *Store) Create(language, code, stdin, title string) (string, error) {
 	token, err := generateToken()
 	if err != nil {
@@ -75,7 +69,6 @@ func (s *Store) Create(language, code, stdin, title string) (string, error) {
 	return token, nil
 }
 
-// Get retrieves a snippet by its token.
 func (s *Store) Get(token string) (*Snippet, error) {
 	row := s.db.QueryRow(
 		`SELECT token, language, code, stdin, title, created_at FROM snippets WHERE token = ?`,
@@ -83,7 +76,9 @@ func (s *Store) Get(token string) (*Snippet, error) {
 	)
 
 	var snippet Snippet
+
 	err := row.Scan(&snippet.Token, &snippet.Language, &snippet.Code, &snippet.Stdin, &snippet.Title, &snippet.CreatedAt)
+
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -95,7 +90,7 @@ func (s *Store) Get(token string) (*Snippet, error) {
 }
 
 func generateToken() (string, error) {
-	b := make([]byte, 6) // 12 hex chars
+	b := make([]byte, 6)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err

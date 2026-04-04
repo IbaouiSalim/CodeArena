@@ -40,9 +40,9 @@ services:
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
       - "traefik.http.services.api.loadbalancer.server.port=8080"
-      # Rate limiting
-      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=10"
-      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=20"
+      # Rate limiting (aligned with backend: 5 req/sec, 15 burst)
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.average=5"
+      - "traefik.http.middlewares.api-ratelimit.ratelimit.burst=15"
       - "traefik.http.routers.api.middlewares=api-ratelimit"
     restart: unless-stopped
 
