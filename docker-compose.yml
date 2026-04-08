@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+  # TCP proxy for Docker socket access (backend needs to spawn containers)
   docker-proxy:
     image: alpine/socat
     command: TCP-LISTEN:2375,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock

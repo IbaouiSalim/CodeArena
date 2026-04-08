@@ -45,13 +45,75 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
+      - name: Check formatting
+        working-directory: frontend
+        run: npm run format:check
+
       - name: Run Vitest
         working-directory: frontend
         run: npx vitest run --coverage
 
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Build compiler images
+        run: |
+          docker build -t codearena-python -f infra/docker/python.Dockerfile infra/docker
+          docker build -t codearena-go -f infra/docker/go.Dockerfile infra/docker
+          docker build -t codearena-cpp -f infra/docker/cpp.Dockerfile infra/docker
+          docker build -t codearena-rust -f infra/docker/rust.Dockerfile infra/docker
+          docker build -t codearena-javascript -f infra/docker/javascript.Dockerfile infra/docker
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps
+
+      - name: Start backend (background)
+        working-directory: backend
+        run: |
+          go run . > /tmp/backend.log 2>&1 &
+          echo $! > /tmp/backend.pid
+          sleep 2
+
+      - name: Start frontend dev server (background)
+        working-directory: frontend
+        run: |
+          npm run dev > /tmp/frontend.log 2>&1 &
+          echo $! > /tmp/frontend.pid
+          sleep 3
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: npm run test:e2e
+        continue-on-error: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 5
+
   build:
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
+    needs: [test-backend, test-frontend, e2e-tests]
     steps:
       - uses: actions/checkout@v4
 

@@ -88,7 +88,7 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req executor.Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		if err.Error() == "http: request body too large" {
+		if strings.Contains(err.Error(), "request body too large") {
 			http.Error(w, `{"error":"request body too large"}`, http.StatusRequestEntityTooLarge)
 		} else {
 			http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
@@ -178,12 +178,14 @@ func snippetsHandler(w http.ResponseWriter, r *http.Request) {
 // upgrader allows WebSocket connections from the frontend
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// Get allowed origin from environment
+		// Allow WebSocket connections from any origin
+		// In production, restrict this to specific domains via environment variable
 		allowedOrigin := os.Getenv("CORS_ORIGIN")
-		if allowedOrigin == "" {
-			allowedOrigin = "http://localhost:5173" // Default to frontend dev server
+		if allowedOrigin != "" {
+			return r.Header.Get("Origin") == allowedOrigin
 		}
-		return r.Header.Get("Origin") == allowedOrigin
+		// Development: allow all origins
+		return true
 	},
 }
 
@@ -225,10 +227,10 @@ func wsExecuteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[ws] Interactive execution: lang=%s, code=%d bytes", lang, len(startMsg.Code))
+	log.Printf("[ws] Interactive execution: lang=%s, code=%d bytes, stdin=%d bytes", lang, len(startMsg.Code), len(startMsg.Stdin))
 
 	// Run the code interactively (with live stdin/stdout/stderr over WebSocket)
-	exec.RunInteractive(conn, lang, startMsg.Code)
+	exec.RunInteractive(conn, lang, startMsg.Code, startMsg.Stdin)
 }
 
 // snippetByTokenHandler retrieves a saved snippet by token (GET /api/snippets/{token})

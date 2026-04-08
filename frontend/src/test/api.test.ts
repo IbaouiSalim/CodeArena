@@ -43,9 +43,9 @@ describe("executeCode", () => {
       text: () => Promise.resolve('{"error":"invalid JSON"}'),
     });
 
-    await expect(
-      executeCode({ language: "python", code: "", stdin: "" }),
-    ).rejects.toThrow("Execution failed");
+    await expect(executeCode({ language: "python", code: "", stdin: "" })).rejects.toThrow(
+      "Execution failed",
+    );
   });
 });
 

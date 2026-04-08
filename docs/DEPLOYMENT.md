@@ -1,6 +1,108 @@
-# Deployment Guide
+# Deployment
 
-This guide explains how to deploy CodeArena to a production VPS using GitHub Actions with automatic TLS via Let's Encrypt and Traefik.
+## Prerequisites
+
+Ubuntu 22.04+ server with public IP, domain name, Docker, Docker Compose.
+
+## Setup VPS
+
+```bash
+# SSH into VPS
+ssh root@your-vps-ip
+
+# Update system
+apt update && apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Install Docker Compose
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Create app directory
+mkdir -p /opt/codearena
+cd /opt/codearena
+git clone https://git.fh-aachen.de/codearenaproject/codearena.git .
+```
+
+## Configure Firewall
+
+```bash
+ufw default deny incoming
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable
+```
+
+## Setup Deployment
+
+Create `.env.production` on VPS:
+```bash
+DOMAIN=codearena.example.com
+ACME_EMAIL=admin@example.com
+```
+
+## Deploy with Docker Compose
+
+```bash
+cd /opt/codearena
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Traefik automatically handles HTTPS with Let's Encrypt.
+
+## Verify Deployment
+
+```bash
+# Check containers
+docker compose -f docker-compose.prod.yml ps
+
+# Check certificate
+docker compose -f docker-compose.prod.yml logs traefik | grep ACME
+
+# Test HTTPS
+curl -I https://codearena.example.com/
+```
+
+## Operations
+
+View logs:
+```bash
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+Restart:
+```bash
+docker compose -f docker-compose.prod.yml restart
+```
+
+Update:
+```bash
+git pull origin main
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+## Rollback
+
+```bash
+git checkout HEAD~1
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+## Troubleshooting
+
+Check Traefik for certificate issues:
+```bash
+docker compose -f docker-compose.prod.yml logs traefik
+```
+
+Restart backend if code cannot connect to Docker:
+```bash
+docker compose -f docker-compose.prod.yml restart backend
+```
 
 ## Prerequisites
 
@@ -39,7 +141,7 @@ docker-compose --version
 ```bash
 mkdir -p /opt/codearena
 cd /opt/codearena
-git clone https://github.com/YOUR_ORG/codearena.git .
+git clone https://git.fh-aachen.de/codearenaproject/codearena.git .
 ```
 
 ## Step 2: Configure Firewall
@@ -97,6 +199,9 @@ Copy the **private key** content (starts with `-----BEGIN OPENSSH PRIVATE KEY---
 
 #### `VPS_USER`
 - **Value**: SSH username (typically `root` or your deployment user)
+
+#### `GITHUB_TOKEN` (optional)
+- **Value**: GitHub/GitLab personal access token for private repositories
 
 #### `VPS_SSH_KEY`
 - **Value**: Paste the **entire private SSH key** from `/opt/codearena/.ssh/deploy_key`

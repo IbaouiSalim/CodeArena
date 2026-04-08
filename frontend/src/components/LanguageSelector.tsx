@@ -14,8 +14,20 @@ const languages: {
   desc: string;
   color: string;
 }[] = [
-  { value: "python", label: "Python", icon: "/lang-icons/python.png", desc: "3.12", color: "#3776AB" },
-  { value: "javascript", label: "JavaScript", icon: "/lang-icons/javascript.png", desc: "Node 22", color: "#F7DF1E" },
+  {
+    value: "python",
+    label: "Python",
+    icon: "/lang-icons/python.png",
+    desc: "3.12",
+    color: "#3776AB",
+  },
+  {
+    value: "javascript",
+    label: "JavaScript",
+    icon: "/lang-icons/javascript.png",
+    desc: "Node 22",
+    color: "#F7DF1E",
+  },
   { value: "go", label: "Go", icon: "/lang-icons/go.png", desc: "1.23", color: "#00ADD8" },
   { value: "cpp", label: "C++", icon: "/lang-icons/cpp.png", desc: "GCC 13", color: "#659BD3" },
   { value: "rust", label: "Rust", icon: "/lang-icons/rust.png", desc: "1.83", color: "#DEA584" },
@@ -24,7 +36,7 @@ const languages: {
 export default function LanguageSelector({ language, onChange }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  
+
   const current = languages.find((l) => l.value === language)!;
 
   useEffect(() => {
@@ -65,7 +77,7 @@ export default function LanguageSelector({ language, onChange }: LanguageSelecto
       {open && (
         <div className="lang-select-dropdown" role="listbox" aria-label="Languages">
           <div className="lang-select-header">Select Language</div>
-          
+
           {languages.map((l) => {
             const selected = l.value === language;
             return (

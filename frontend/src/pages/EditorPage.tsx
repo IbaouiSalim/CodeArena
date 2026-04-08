@@ -6,13 +6,14 @@ import Header from "../components/Header";
 import CodeEditor from "../components/CodeEditor";
 import LanguageSelector from "../components/LanguageSelector";
 import InteractiveTerminal from "../components/InteractiveTerminal";
+import StdinPanel from "../components/StdinPanel";
 import ShareButton from "../components/ShareButton";
 import SnippetLibrary from "../components/SnippetLibrary";
 import { loadSnippet } from "../utils/api";
 
 function getWebSocketURL(): string {
   if (typeof window === "undefined") return "ws://localhost:8080/api/execute/ws";
-  
+
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   if (window.location.hostname === "localhost") {
     return `${protocol}//localhost:8080/api/execute/ws`;
@@ -60,6 +61,7 @@ export default function EditorPage() {
 
   const [language, setLanguage] = useState<Language>("python");
   const [code, setCode] = useState(defaultCode.python);
+  const [stdin, setStdin] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("code");
@@ -69,23 +71,19 @@ export default function EditorPage() {
 
   useEffect(() => {
     if (!token) return;
-    
+
     loadSnippet(token)
       .then((snippet) => {
         setLanguage(snippet.language);
         setCode(snippet.code);
       })
-      .catch(() => {
-      });
+      .catch(() => {});
   }, [token]);
 
-  const handleLanguageChange = useCallback(
-    (lang: Language) => {
-      setLanguage(lang);
-      setCode(defaultCode[lang]);
-    },
-    [],
-  );
+  const handleLanguageChange = useCallback((lang: Language) => {
+    setLanguage(lang);
+    setCode(defaultCode[lang]);
+  }, []);
 
   const handleRun = useCallback(() => {
     if (!code.trim() || isRunning) return;
@@ -107,37 +105,38 @@ export default function EditorPage() {
           type: "start",
           language,
           code,
+          stdin,
         }),
       );
     };
 
     ws.onclose = () => {
-      setIsRunning(false);  // Code finished executing
+      setIsRunning(false); // Code finished executing
     };
 
     ws.onerror = () => {
-      setIsRunning(false);  // Connection error
+      setIsRunning(false); // Connection error
     };
-  }, [language, code, isRunning, isMobile]);
+  }, [language, code, stdin, isRunning, isMobile]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Event Handler: Example code selected from snippet library
   // ─────────────────────────────────────────────────────────────────────────
-  
+
   const handleSnippetSelect = useCallback((snippet: SnippetExample) => {
     setLanguage(snippet.language);
     setCode(snippet.code);
-    setMobileTab("code");  // Switch to code view on mobile
+    setMobileTab("code"); // Switch to code view on mobile
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Event Handler: Keyboard shortcut (Ctrl+Enter or Cmd+Enter to run)
   // ─────────────────────────────────────────────────────────────────────────
-  
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();  // Prevent default browser behavior
+        e.preventDefault(); // Prevent default browser behavior
         handleRun();
       }
     },
@@ -159,7 +158,7 @@ export default function EditorPage() {
       <div className="toolbar">
         <div className="toolbar-left">
           <LanguageSelector language={language} onChange={handleLanguageChange} />
-          
+
           <button
             className="btn btn-ghost hide-mobile"
             onClick={() => setLibraryOpen(true)}
@@ -180,20 +179,16 @@ export default function EditorPage() {
           >
             <BookOpen size={16} />
           </button>
-          
-          <ShareButton language={language} code={code} stdin="" />
-          
+
+          <ShareButton language={language} code={code} stdin={stdin} />
+
           <button
             className="btn btn-primary"
             onClick={handleRun}
             disabled={isRunning || !code.trim()}
             type="button"
           >
-            {isRunning ? (
-              <div className="spinner-small" />
-            ) : (
-              <Play size={16} fill="currentColor" />
-            )}
+            {isRunning ? <div className="spinner-small" /> : <Play size={16} fill="currentColor" />}
             <span>Run</span>
             <kbd className="kbd">Ctrl+↵</kbd>
           </button>
@@ -225,6 +220,7 @@ export default function EditorPage() {
         <div className="editor-layout">
           <div className="editor-main">
             <CodeEditor language={language} code={code} onChange={setCode} />
+            <StdinPanel stdin={stdin} onChange={setStdin} />
           </div>
           <InteractiveTerminal isRunning={isRunning} wsRef={wsRef} />
         </div>
@@ -235,6 +231,7 @@ export default function EditorPage() {
           {mobileTab === "code" && (
             <div className="mobile-panel">
               <CodeEditor language={language} code={code} onChange={setCode} />
+              <StdinPanel stdin={stdin} onChange={setStdin} fullSize />
             </div>
           )}
           {mobileTab === "terminal" && (

@@ -6,5 +6,3 @@ RUN useradd -m -s /bin/bash runner && \
 
 USER runner
 WORKDIR /home/runner
-
-ENTRYPOINT ["cargo", "run", "--"]

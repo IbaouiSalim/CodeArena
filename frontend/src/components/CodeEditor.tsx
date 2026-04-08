@@ -40,7 +40,7 @@ export default function CodeEditor({ language, code, onChange }: CodeEditorProps
           automaticLayout: true,
           tabSize: 4,
           wordWrap: "on",
-          suggest: { showKeywords: true }
+          suggest: { showKeywords: true },
         }}
       />
     </div>

@@ -58,9 +58,7 @@ export default function OutputPanel({ result, error, isRunning }: OutputPanelPro
 
         {!isRunning && result && (
           <>
-            {result.stdout && (
-              <pre className="output-stdout">{result.stdout}</pre>
-            )}
+            {result.stdout && <pre className="output-stdout">{result.stdout}</pre>}
             {result.stderr && (
               <div className="output-stderr-section">
                 <span className="stderr-label">stderr</span>

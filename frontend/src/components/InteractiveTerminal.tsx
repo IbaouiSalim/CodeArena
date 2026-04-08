@@ -1,44 +1,34 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { Terminal, AlertCircle, Clock, CheckCircle, CornerDownLeft } from "lucide-react";
 
-// ═══════════════════════════════════════════════════════════════════════════
-// InteractiveTerminal Component: Shows program output and lets user send input
-// ═══════════════════════════════════════════════════════════════════════════
-
-// Information about when the program finished
 interface ExitInfo {
-  exitCode: number;   // 0 = success, other = error
-  durationMs: number; // How long it ran
-  wasTimeout: boolean;// Did it get killed for running too long?
+  exitCode: number;
+  durationMs: number;
+  wasTimeout: boolean;
 }
 
 interface InteractiveTerminalProps {
-  isRunning: boolean;  // Is the program currently executing?
-  wsRef: React.MutableRefObject<WebSocket | null>;  // Reference to WebSocket connection
+  isRunning: boolean;
+  wsRef: React.MutableRefObject<WebSocket | null>;
 }
 
-// One line of output
 interface TerminalEntry {
   type: "output" | "stderr" | "error" | "system";
   text: string;
 }
 
 export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTerminalProps) {
-  // State variables
-  const [entries, setEntries] = useState<TerminalEntry[]>([]);  // All lines of output so far
-  const [inputValue, setInputValue] = useState("");             // Text the user typed to send
-  const [exitInfo, setExitInfo] = useState<ExitInfo | null>(null);  // Info when program finished
-  const [hasRun, setHasRun] = useState(false);                  // Has the user clicked Run yet?
+  const [entries, setEntries] = useState<TerminalEntry[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [exitInfo, setExitInfo] = useState<ExitInfo | null>(null);
+  const [hasRun, setHasRun] = useState(false);
 
-  const bodyRef = useRef<HTMLDivElement>(null);  // Reference to the scrollable output area
-  const inputRef = useRef<HTMLInputElement>(null);  // Reference to the input text field
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Auto-scroll to bottom when new output arrives
-  // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (bodyRef.current) {
-      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;  // Jump to bottom
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
   }, [entries, isRunning, exitInfo]);
 
@@ -63,19 +53,15 @@ export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTer
 
         switch (msg.type) {
           case "output":
-            // Stdout (print statements, normal output)
             setEntries((prev) => [...prev, { type: "output", text: msg.data }]);
             break;
           case "stderr":
-            // Stderr (error messages from the program)
             setEntries((prev) => [...prev, { type: "stderr", text: msg.data }]);
             break;
           case "error":
-            // System error messages
             setEntries((prev) => [...prev, { type: "error", text: msg.message }]);
             break;
           case "exit":
-            // Program finished! Show exit code and duration
             setExitInfo({
               exitCode: msg.exitCode,
               durationMs: msg.durationMs,
@@ -101,7 +87,7 @@ export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTer
 
     // Send the input line with a newline character (so program knows input is complete)
     ws.send(JSON.stringify({ type: "stdin", data: inputValue + "\n" }));
-    setInputValue("");  // Clear the input field
+    setInputValue(""); // Clear the input field
   }, [inputValue, wsRef]);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -110,7 +96,7 @@ export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTer
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        e.preventDefault();  // Don't add a newline to the input field
+        e.preventDefault(); // Don't add a newline to the input field
         handleSendInput();
       }
     },
@@ -183,10 +169,7 @@ export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTer
           // Program has run - show all the output
           <div className="terminal-output">
             {entries.map((entry, i) => (
-              <span
-                key={i}
-                className={`terminal-text terminal-${entry.type}`}
-              >
+              <span key={i} className={`terminal-text terminal-${entry.type}`}>
                 {entry.text}
               </span>
             ))}
@@ -210,12 +193,12 @@ export default function InteractiveTerminal({ isRunning, wsRef }: InteractiveTer
       {/* ─── Input field (only shown while program is running) ─── */}
       {isRunning && !exitInfo && (
         <div className="terminal-input-bar">
-          <span className="terminal-prompt">›</span>  {/* Prompt symbol */}
+          <span className="terminal-prompt">›</span> {/* Prompt symbol */}
           <input
             ref={inputRef}
             type="text"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}  // Update state as user types
+            onChange={(e) => setInputValue(e.target.value)} // Update state as user types
             onKeyDown={handleKeyDown}
             className="terminal-input"
             placeholder="Type input here and press Enter..."

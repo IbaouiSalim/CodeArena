@@ -29,13 +29,16 @@ export default function StdinPanel({ stdin, onChange, fullSize = false }: StdinP
           className="stdin-full-input"
           value={stdin}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={"Enter input for your program here...\n\nExample: if your code reads from stdin\n(input() in Python, Scanner in Go, cin in C++),\ntype the values your program expects."}
+          placeholder={
+            "Enter input for your program here...\n\nExample: if your code reads from stdin\n(input() in Python, Scanner in Go, cin in C++),\ntype the values your program expects."
+          }
           spellCheck={false}
         />
         {stdin.length > 0 && (
           <div className="stdin-full-footer">
             <span className="stdin-char-count">
-              {stdin.length} character{stdin.length !== 1 ? "s" : ""} · {stdin.split("\n").length} line{stdin.split("\n").length !== 1 ? "s" : ""}
+              {stdin.length} character{stdin.length !== 1 ? "s" : ""} · {stdin.split("\n").length}{" "}
+              line{stdin.split("\n").length !== 1 ? "s" : ""}
             </span>
           </div>
         )}

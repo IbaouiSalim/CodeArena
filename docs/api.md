@@ -1,5 +1,7 @@
 # API Reference
 
+**Implemented by:** Mohamed Salim Ibaoui (ibaouisalim@gmail.com)
+
 ## 1. Health Check
 
 **GET /api/health**

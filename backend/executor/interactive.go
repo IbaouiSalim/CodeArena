@@ -17,6 +17,7 @@ type WsMessage struct {
 	Data       string `json:"data,omitempty"`
 	Language   string `json:"language,omitempty"`
 	Code       string `json:"code,omitempty"`
+	Stdin      string `json:"stdin,omitempty"`
 	ExitCode   int    `json:"exitCode,omitempty"`
 	DurationMs int64  `json:"durationMs,omitempty"`
 	WasTimeout bool   `json:"wasTimeout,omitempty"`
@@ -35,7 +36,7 @@ func sendWsError(ws *websocket.Conn, message string) {
 // RunInteractive runs code in a Docker container with interactive stdin/stdout
 // over a WebSocket connection. The container uses a PTY so output includes
 // echoed input, behaving like a real terminal.
-func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string) {
+func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string, stdin string) {
 	ctx, cancel := context.WithTimeout(context.Background(), e.cfg.Timeout+10*time.Second)
 	defer cancel()
 
@@ -45,8 +46,8 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 		return
 	}
 
-	// Build the command — no stdin piping, stdin comes from attached PTY
-	cmd := buildInteractiveCommand(lang, code)
+	// Build the command — use stdin if provided, otherwise interactive from PTY
+	cmd := buildInteractiveCommand(lang, code, stdin)
 
 	// Container config: TTY + interactive stdin
 	containerCfg := &container.Config{
@@ -107,6 +108,21 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 	}
 
 	start := time.Now()
+
+	// If stdin is provided, feed it to the container immediately after starting
+	if stdin != "" {
+		// Small wait to ensure container is ready to receive input
+		time.Sleep(100 * time.Millisecond)
+
+		_, err := hijack.Conn.Write([]byte(stdin))
+		if err != nil {
+			log.Printf("[interactive] Error feeding prefilled stdin: %v", err)
+		}
+
+		// Do NOT send Ctrl+D - let the container wait for more input via WebSocket
+		// This allows interactive programs to continue running after initial stdin
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	waitTimeout := e.cfg.Timeout
 
@@ -222,9 +238,11 @@ func (e *Executor) RunInteractive(ws *websocket.Conn, lang Language, code string
 	})
 }
 
-// buildInteractiveCommand creates the shell command without stdin piping.
-// Stdin comes from the attached PTY instead.
-func buildInteractiveCommand(lang Language, code string) []string {
+// buildInteractiveCommand creates the shell command for the container.
+// Stdin is fed through the hijacked connection/PTY.
+func buildInteractiveCommand(lang Language, code string, stdin string) []string {
+	// Note: The stdin parameter is not used here for building the command.
+	// Instead, it's fed to the container through the hijacked connection.
 	switch lang {
 	case LangPython:
 		script := writeAndExec(code, "main.py", "python3 -u main.py")

@@ -3,20 +3,14 @@ import { snippetExamples } from "../utils/snippets";
 import type { Language, SnippetExample } from "../types";
 import { useState } from "react";
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SnippetLibrary Component: Modal showing example code snippets
-// Let users browse and load example code for different languages
-// ═══════════════════════════════════════════════════════════════════════════
-
 interface SnippetLibraryProps {
-  isOpen: boolean;  // Is the modal visible?
-  onClose: () => void;  // Called when user closes the modal
-  onSelect: (snippet: SnippetExample) => void;  // Called when user selects a snippet
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (snippet: SnippetExample) => void;
 }
 
-// Tabs at the top to filter by language
 const languageTabs: { value: Language | "all"; label: string }[] = [
-  { value: "all", label: "All" },  // Show all snippets
+  { value: "all", label: "All" },
   { value: "python", label: "Python" },
   { value: "go", label: "Go" },
   { value: "cpp", label: "C++" },
@@ -24,26 +18,21 @@ const languageTabs: { value: Language | "all"; label: string }[] = [
   { value: "javascript", label: "JS" },
 ];
 
-// Color for each language (used for the dot next to language name)
 const langColors: Record<Language, string> = {
-  python: "#3572A5",     // Blue
-  go: "#00ADD8",         // Cyan
-  cpp: "#f34b7d",        // Pink
-  rust: "#DEA584",       // Orange/Brown
-  javascript: "#F7DF1E", // Yellow
+  python: "#3572A5",
+  go: "#00ADD8",
+  cpp: "#f34b7d",
+  rust: "#DEA584",
+  javascript: "#F7DF1E",
 };
 
 export default function SnippetLibrary({ isOpen, onClose, onSelect }: SnippetLibraryProps) {
-  // State: Which language is the user filtering by?
   const [filter, setFilter] = useState<Language | "all">("all");
 
-  if (!isOpen) return null;  // Don't show modal if closed
+  if (!isOpen) return null;
 
-  // Filter the snippets based on selected language
   const filtered =
-    filter === "all"
-      ? snippetExamples  // Show all
-      : snippetExamples.filter((s) => s.language === filter);  // Show only selected language
+    filter === "all" ? snippetExamples : snippetExamples.filter((s) => s.language === filter);
 
   return (
     // Modal overlay (dark background)
@@ -84,8 +73,14 @@ export default function SnippetLibrary({ isOpen, onClose, onSelect }: SnippetLib
                 key={`${snippet.language}-${snippet.title}-${i}`}
                 className="snippet-card"
                 onClick={() => {
-                  onSelect(snippet);  {/* User picked this snippet */}
-                  onClose();  {/* Close the modal */}
+                  onSelect(snippet);
+                  {
+                    /* User picked this snippet */
+                  }
+                  onClose();
+                  {
+                    /* Close the modal */
+                  }
                 }}
                 type="button"
               >
@@ -97,10 +92,10 @@ export default function SnippetLibrary({ isOpen, onClose, onSelect }: SnippetLib
                   />
                   <span className="snippet-lang">{snippet.language}</span>
                 </div>
-                
+
                 {/* Card title */}
                 <h3 className="snippet-title">{snippet.title}</h3>
-                
+
                 {/* First 4 lines of code as a preview */}
                 <pre className="snippet-preview">
                   {snippet.code.split("\n").slice(0, 4).join("\n")}

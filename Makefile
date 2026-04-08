@@ -1,4 +1,36 @@
-.PHONY: all build-backend build-frontend build-images dev test test-backend test-frontend test-e2e lint
+.PHONY: help all build-backend build-frontend build-images dev test test-backend test-frontend test-e2e lint format format-check clean up down logs
+
+help:
+	@echo "Makefile targets:"
+	@echo ""
+	@echo "Build:"
+	@echo "  make all              build everything"
+	@echo "  make build-backend    build Go backend"
+	@echo "  make build-frontend   build React frontend"
+	@echo "  make build-images     build Docker compiler images"
+	@echo ""
+	@echo "Development:"
+	@echo "  make dev              start backend and frontend"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test             run all tests"
+	@echo "  make test-backend     run Go tests"
+	@echo "  make test-frontend    run React tests"
+	@echo "  make test-e2e         run E2E tests"
+	@echo ""
+	@echo "Code:"
+	@echo "  make lint             lint code"
+	@echo "  make format           format code"
+	@echo "  make format-check     check formatting"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make up               start services"
+	@echo "  make down             stop services"
+	@echo "  make logs             view logs"
+	@echo ""
+	@echo "Clean:"
+	@echo "  make clean            remove build files"
+	@echo ""
 
 all: build-backend build-frontend build-images
 
@@ -32,16 +64,23 @@ test-e2e:
 
 lint:
 	cd frontend && npm run lint
-	cd frontend && npx prettier --check "src/**/*.{ts,tsx}"
 
-# ── Docker Compose ─────────────────────────────────
+format:
+	cd frontend && npm run format
+
+format-check:
+	cd frontend && npm run format:check
+
 up:
 	docker compose up --build -d
 
 down:
 	docker compose down
 
-# ── Clean ──────────────────────────────────────────
+logs:
+	docker compose logs -f
+
 clean:
 	rm -f backend/codearena backend/codearena.exe backend/codearena.db
 	rm -rf frontend/dist frontend/node_modules
+	docker image rm codearena-python codearena-go codearena-cpp codearena-rust codearena-javascript 2>/dev/null || true

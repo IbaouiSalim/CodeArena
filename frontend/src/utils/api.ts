@@ -1,18 +1,20 @@
-import type { ExecuteRequest, ExecuteResponse, SnippetRequest, SnippetResponse, Snippet } from "../types";
+import type {
+  ExecuteRequest,
+  ExecuteResponse,
+  SnippetRequest,
+  SnippetResponse,
+  Snippet,
+} from "../types";
 
-// Get API base URL from environment or use sensible defaults
 function getAPIBase(): string {
-  // If frontend is on same domain as API, use relative URLs
   if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
     return "/api";
   }
-  
-  // Development: use localhost:8080
+
   if (typeof window !== "undefined" && window.location.hostname === "localhost") {
     return "http://localhost:8080/api";
   }
-  
-  // Fallback
+
   return "/api";
 }
 
