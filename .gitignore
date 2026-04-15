@@ -1,0 +1,36 @@
+# ======================
+# Node / Frontend
+# ======================
+node_modules/
+dist/
+.vite/
+
+# ======================
+# Go / Backend
+# ======================
+*.exe
+*.exe~
+*.out
+*.test
+*.log
+*.db
+*.db-shm
+*.db-wal
+
+# ======================
+# Environment files
+# ======================
+.env
+.env.local
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+Thumbs.db
+.vscode/
+
+# ======================
+# Build artifacts
+# ======================
+coverage/

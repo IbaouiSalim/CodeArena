@@ -1,0 +1,4 @@
+	codearena		coverage: 0.0% of statements
+ok  	codearena/executor	1.645s	coverage: 12.3% of statements
+ok  	codearena/ratelimit	1.464s	coverage: 58.3% of statements
+ok  	codearena/store	1.877s	coverage: 79.3% of statements
