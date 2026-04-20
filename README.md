@@ -74,7 +74,7 @@ make test-frontend
 make test-e2e
 ```
 
-All 39 tests passing.
+All 44 tests passing.
 
 ## License
 
