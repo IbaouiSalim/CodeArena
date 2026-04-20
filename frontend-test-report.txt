@@ -1,0 +1,28 @@
+
+> codearena-frontend@1.0.0 test
+> vitest run --run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/xxsal/Desktop/CodeArena/frontend[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32mÔ£ô[39m src/test/snippets.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32mÔ£ô[39m src/test/api.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m src/test/Header.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m12 passed[39m[22m[90m (12)[39m
+[2m   Start at [22m 18:00:10
+[2m   Duration [22m 1.12s[2m (transform 127ms, setup 330ms, import 240ms, tests 44ms, environment 1.81s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+--------------|---------|----------|---------|---------|-------------------
+File          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+--------------|---------|----------|---------|---------|-------------------
+All files     |   85.71 |    78.57 |     100 |   85.71 |                   
+ components   |     100 |      100 |     100 |     100 |                   
+  Header.tsx  |     100 |      100 |     100 |     100 |                   
+ utils        |   85.18 |    78.57 |     100 |   85.18 |                   
+  api.ts      |   84.61 |    78.57 |     100 |   84.61 | 11,18,46-47       
+  snippets.ts |     100 |      100 |     100 |     100 |                   
+--------------|---------|----------|---------|---------|-------------------

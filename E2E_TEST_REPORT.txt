@@ -1,0 +1,18 @@
+
+> codearena-frontend@1.0.0 test:e2e
+> playwright test
+
+
+Running 9 tests using 1 worker
+
+  Ô£ô  1 [chromium] ÔÇ║ e2e\codearena.spec.ts:41:1 ÔÇ║ loads editor with all required UI elements (1.3s)
+  Ô£ô  2 [chromium] ÔÇ║ e2e\codearena.spec.ts:50:1 ÔÇ║ runs Python code and displays output (2.6s)
+  Ô£ô  3 [chromium] ÔÇ║ e2e\codearena.spec.ts:63:1 ÔÇ║ runs Go code and displays output (14.8s)
+  Ô£ô  4 [chromium] ÔÇ║ e2e\codearena.spec.ts:85:1 ÔÇ║ runs C++ code and displays output (4.6s)
+  Ô£ô  5 [chromium] ÔÇ║ e2e\codearena.spec.ts:105:1 ÔÇ║ displays compilation error for invalid code (2.5s)
+  Ô£ô  6 [chromium] ÔÇ║ e2e\codearena.spec.ts:123:1 ÔÇ║ accepts stdin input and displays output (4.1s)
+  Ô£ô  7 [chromium] ÔÇ║ e2e\codearena.spec.ts:149:1 ÔÇ║ shares code and loads shared snippet (4.4s)
+  Ô£ô  8 [chromium] ÔÇ║ e2e\codearena.spec.ts:185:1 ÔÇ║ displays timeout error for infinite loop (13.3s)
+  Ô£ô  9 [chromium] ÔÇ║ e2e\codearena.spec.ts:200:1 ÔÇ║ shows exit code for program that exits with error (2.7s)
+
+  9 passed (51.7s)

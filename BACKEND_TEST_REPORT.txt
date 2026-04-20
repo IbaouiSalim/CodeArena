@@ -1,0 +1,51 @@
+?   	codearena	[no test files]
+=== RUN   TestBuildCommand_Python
+--- PASS: TestBuildCommand_Python (0.00s)
+=== RUN   TestBuildCommand_Go
+--- PASS: TestBuildCommand_Go (0.00s)
+=== RUN   TestBuildCommand_Cpp
+--- PASS: TestBuildCommand_Cpp (0.00s)
+=== RUN   TestBuildCommand_Rust
+--- PASS: TestBuildCommand_Rust (0.00s)
+=== RUN   TestBuildCommand_Javascript
+--- PASS: TestBuildCommand_Javascript (0.00s)
+=== RUN   TestBuildCommand_WithStdin
+--- PASS: TestBuildCommand_WithStdin (0.00s)
+=== RUN   TestBuildCommand_WithoutStdin
+--- PASS: TestBuildCommand_WithoutStdin (0.00s)
+=== RUN   TestWriteAndRun_CodeEndsWithNewline
+--- PASS: TestWriteAndRun_CodeEndsWithNewline (0.00s)
+=== RUN   TestWriteAndRun_CodeWithoutNewline
+--- PASS: TestWriteAndRun_CodeWithoutNewline (0.00s)
+=== RUN   TestTruncate_Short
+--- PASS: TestTruncate_Short (0.00s)
+=== RUN   TestTruncate_Long
+--- PASS: TestTruncate_Long (0.00s)
+=== RUN   TestDefaultConfig
+--- PASS: TestDefaultConfig (0.00s)
+=== RUN   TestImageMap_AllLanguages
+--- PASS: TestImageMap_AllLanguages (0.00s)
+=== RUN   TestInt64Ptr
+--- PASS: TestInt64Ptr (0.00s)
+PASS
+ok  	codearena/executor	(cached)
+=== RUN   TestAllow_UnderLimit
+--- PASS: TestAllow_UnderLimit (0.00s)
+=== RUN   TestAllow_OverLimit
+--- PASS: TestAllow_OverLimit (0.00s)
+=== RUN   TestAllow_DifferentIPs
+--- PASS: TestAllow_DifferentIPs (0.00s)
+PASS
+ok  	codearena/ratelimit	(cached)
+=== RUN   TestNewStore
+--- PASS: TestNewStore (0.01s)
+=== RUN   TestCreateAndGet
+--- PASS: TestCreateAndGet (0.01s)
+=== RUN   TestGetNotFound
+--- PASS: TestGetNotFound (0.01s)
+=== RUN   TestCreateMultiple
+--- PASS: TestCreateMultiple (0.01s)
+=== RUN   TestGenerateToken
+--- PASS: TestGenerateToken (0.00s)
+PASS
+ok  	codearena/store	(cached)

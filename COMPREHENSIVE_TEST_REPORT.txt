@@ -1,0 +1,70 @@
+================================================================================
+                    COMPREHENSIVE TEST REPORT - CodeArena
+================================================================================
+
+EXECUTION DATE: 2026-04-20 18:02:01
+
+================================================================================
+1. BACKEND TESTS (Go)
+================================================================================
+Test Packages Executed: 3 (executor, ratelimit, store)
+Total Individual Tests: 23
+Test Packages Passed: 3
+Test Packages Failed: 0
+Pass Rate: 100%
+
+Test Breakdown:
+- codearena/executor: 15 tests - PASSED
+- codearena/ratelimit: 3 tests - PASSED  
+- codearena/store: 5 tests - PASSED
+
+Summary: ✓ All 23 backend unit tests PASSED
+
+================================================================================
+2. E2E TESTS (Playwright)
+================================================================================
+Total E2E Tests: 9
+Tests Passed: 9
+Tests Failed: 0
+Pass Rate: 100%
+Total Execution Time: 51.7 seconds
+Workers Used: 1
+
+Test Coverage:
+✓ UI Component Loading
+✓ Python Code Execution
+✓ Go Code Execution  
+✓ C++ Code Execution
+✓ Error Handling (Compilation Errors)
+✓ STDIN Input Handling
+✓ Code Sharing Functionality
+✓ Timeout Handling
+✓ Exit Code Handling
+
+Summary: ✓ All 9 E2E tests PASSED
+
+================================================================================
+3. TEST SUMMARY STATISTICS
+================================================================================
+Total Tests Executed: 32
+Total Tests Passed: 32
+Total Tests Failed: 0
+Overall Pass Rate: 100%
+
+Backend Tests: 23 tests - 100% pass rate
+E2E Tests: 9 tests - 100% pass rate
+
+================================================================================
+4. TEST REPORTS GENERATED
+================================================================================
+✓ BACKEND_TEST_REPORT.txt - Contains full Go test output with package summaries
+✓ E2E_TEST_REPORT.txt - Contains full Playwright test run results
+
+Files Location: C:\Users\xxsal\Desktop\CodeArena\
+
+================================================================================
+OVERALL TEST SUITE STATUS: ✓ PASSED
+================================================================================
+All tests executed successfully with a 100% pass rate. The CodeArena application
+is functioning correctly across both backend unit tests and end-to-end tests.
+

@@ -54,7 +54,7 @@ dev:
 	cd backend && go run . &
 	cd frontend && npm run dev
 
-test: test-backend test-frontend
+test: test-backend test-frontend test-e2e
 
 test-backend:
 	cd backend && go test ./... -v
